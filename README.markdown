@@ -8,50 +8,40 @@ If you have questions, feel free to email me: alexandersante@gmail.com
 
 - Place the plugin's zip file "bouncer-x.x.zip" in your "/plugins" directory.  CFWheels will automatically unzip the contents into its own folder.
 
-- This plugin assumed your app has a global function called currentUser().  I'll make this a configurable option later, but for now create a new function called "currentUser" in "/events/functions.cfm".  This function should return the current user's model object.
+- Create a global function called "currentUser()" in "/events/functions.cfm" that will return the current user's model object.
 
-- Define abilities in the user model
+- Create a private method in your user model called "_configureAbilities".  That function needs to be called when the model is initialized.  You can do this by calling
+"<cfset afterInitialization(methods='_configureAbilities')>" in your model's init method.  
 
-- Enjoy
-
-## About the plugin
-What's it all about!?
-
-This plugin inspired by a popular rails gem called CanCan.  It will place a bouncer in each of your controllers.  Each model will also have the capability of using a bouncer, however it's really meant for the user model.  It is up to you, the awesome coder, to implement the logic that will put this bouncer to work.
-
-So basically this is how it works.  
-
-Your model has been decorated with two new methods, ableTo and notAbleTo.  It is up to you to
-tell the user model what it is able or not able to do.  For example, let's say a "Guest" user is
-currently on the system.  We only want that user to be able to read blog posts, and that's it!
-
-Create a new method in your user model called "_configureAbilities".  You can name this method whatever
-you want.  Then associate the method to the call back "afterInitialation" like so:
-
-	<cfset afterInitialization(methods="_configureAbilities")>
-
-This will not be automatically called by cfWheels after the user has been loaded.  You now have to define
-each ability.  In this example, we only want to give the user read access to blog posts, so we tell the 
-system just that.
+- Define abilities inside the "_configureAbilities()" function.  Like so:
 
 	<cfset ableTo("READ", "Post")>
-					^         ^
-					|		  |	
-				{Permission}  |
-				              |
-					{Singular name of the model}
+	<cfset ableTo("WRITE", "Comment")>
 
-Now in a view you can wrap certain content with a permission check.  We need to ask the bouncer if we can come in.
+- Add "isActionAllowed" filter to the base controller.  This assumes all of your controllers extend a base controller (ie: 'extends="controller.Controller"')
 
-(In the view)
+	<cfset filters(through="isActionAllowed", type="before")>
 
-	<cfif user.can("WRITE", "POST")>
-		<a href="/post/new">Create a new blog post</a>
-	</cfif>						
+## Usage
 
-Of course in this case, the bouncer says "No mofo! You can't do that." Or rather .. The link is not rendered.  It's that easy.
+Once the plugin is installed, and all permissions have been defined, you are now ready to make use of Bouncer in your views and controllers.  Let's say you have a series of links to be displayed to the user.  
+	
+	<a href="/users/1">Show User</a>
+	<a href="/users/1/edit">Edit User</a>
 
-"But wait!" you say.  "Can't they just bypass the bouncer via the URL". The answer is no.  Because each controller has it's own bouncer!
-Bouncer will check the name of the controller, and assuming you've followed cfWheels convention, it will match it to a model and perform
-the same check based on the type of action. For example, "Index,Show" are require "READ" permissions.  "Update,Edit,Create" all require
-the "UPDATE" or "MANAGE" permissions and so on.  If the user is rejected, they are sent back to the home page, and a nice little flash message is displayed.
+Showing the users details in this case does not require additional permissions.  However, editing a user details does require additional permissions.  Wrap the elements with an ability check.
+
+	<a href="/users/1">Show User</a>
+
+	<cfif currentUser().can("WRITE","USER")>
+		<a href="/users/1/edit">Edit User</a>
+	</cfif>
+
+This permission is also automatically enforced on controller actions.  So even if I copy and paste the url into the browser address bar, I will not be displayed the user edit screen unless I have the permission.
+
+Available permissions are: READ, WRITE, MANAGE, ALL
+
+READ: The user can only view a record
+WRITE: The user can view and modify a record
+MANAGE: The user can view, modify, and even delete a record
+ALL: No restrictions
