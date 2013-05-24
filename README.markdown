@@ -10,9 +10,9 @@ If you have questions, feel free to email me: alexandersante@gmail.com
 
 - Create a global function called "currentUser()" in "/events/functions.cfm" that will return the current user's model object.
 
-- Create a private method in your user model called "_configureAbilities".  That function needs to be called when the model is initialized.  You can do this by calling 
-	<cfset afterInitialization(methods='_configureAbilities')>
-  in your model's init method.  
+- Create a private method in your user model called "_configureAbilities".  That function needs to be called when the model is initialized.
+
+	<cfset afterInitialization(methods='_configureAbilities')>  
 
 - Define abilities inside the "_configureAbilities()" function.  Like so:
 
